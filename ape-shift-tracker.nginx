@@ -1,0 +1,27 @@
+# Block 1 — redirect HTTP to HTTPS
+server {
+    listen 80;                          # listen on port 80 (plain HTTP)
+    server_name ape-shift-tracker;      # only handle requests for this hostname
+    return 301 https://$host$request_uri; # permanently redirect to HTTPS, preserving the URL
+}
+
+# Block 2 — HTTPS server
+server {
+    listen 443 ssl;                     # listen on port 443 with SSL enabled
+    server_name ape-shift-tracker;
+
+    ssl_certificate /etc/ssl/certs/ape-shift-tracker.crt;        # public certificate
+    ssl_certificate_key /etc/ssl/private/ape-shift-tracker.key;  # private key
+
+    ssl_protocols TLSv1.2 TLSv1.3;     # only allow modern TLS versions, block old broken ones
+    ssl_ciphers HIGH:!aNULL:!MD5;      # only allow strong ciphers, exclude anonymous and MD5
+
+    location / {
+        proxy_pass http://localhost:3000;              # forward request to Express
+        proxy_http_version 1.1;                        # use HTTP/1.1 for keep-alive support
+        proxy_set_header Host $host;                   # pass the original hostname to Express
+        proxy_set_header X-Real-IP $remote_addr;       # pass the real client IP
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; # pass the full IP chain
+        proxy_set_header X-Forwarded-Proto $scheme;    # tell Express the request came via HTTPS
+    }
+}
