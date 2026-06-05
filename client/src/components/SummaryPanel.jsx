@@ -34,14 +34,19 @@ const toHHMM = (ms) => {
     return `${h}h${String(m).padStart(2, '0')}`
 }
 
-function groupByMonth(shifts) {
+function groupByMonth(shifts, payday) {
     const map = {}
     shifts.filter(s => s.end_at).forEach(s => {
         const d = new Date(s.start_at)
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        const label = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+        // determine which period this shift belongs to
+        // if day > payday, it belongs to next month's period
+        const periodMonth = d.getDate() > payday ? d.getMonth() + 1 : d.getMonth()
+        const periodYear = periodMonth > 11 ? d.getFullYear() + 1 : d.getFullYear()
+        const normalizedMonth = periodMonth % 12
+        const key = `${periodYear}-${String(normalizedMonth + 1).padStart(2, '0')}`
+        const label = new Date(periodYear, normalizedMonth, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
         if (!map[key]) map[key] = { key, label, ms: 0 }
-        map[key].ms += new Date(s.end_at) - new Date(s.start_at)
+        map[key].ms += (new Date(s.end_at) - new Date(s.start_at)) - (s.break_ms ?? 0)
     })
     return Object.values(map).sort((a, b) => b.key.localeCompare(a.key))
 }
@@ -94,7 +99,7 @@ export default function SummaryPanel({ summary, settings, shifts, onRefresh }) {
     const doneMinutes = parseHHMM(summary.done_hours)
     const progress = Math.min(100, Math.round((doneMinutes / targetMinutes) * 100))
     const formatDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const months = groupByMonth(shifts ?? [])
+    const months = groupByMonth(shifts ?? [], Number(payday))
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '14px' }}>
