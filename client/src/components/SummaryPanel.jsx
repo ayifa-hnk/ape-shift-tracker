@@ -88,7 +88,8 @@ export default function SummaryPanel({ summary, settings, shifts, onRefresh }) {
         const [year, month] = selectedMonth.split('-').map(Number)
         const from = new Date(year, month - 2, Number(payday) + 1).toISOString()
         const to = new Date(year, month - 1, Number(payday)).toISOString()
-        const url = `${API}/shifts/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`
+        const monthName = new Date(year, month - 1, 1).toLocaleDateString('en', { month: 'short' })
+        const url = `${API}/shifts/export?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&month=${monthName}${year}`
         const a = document.createElement('a')
         a.href = url
         a.download = `shifts-${selectedMonth}.pdf`

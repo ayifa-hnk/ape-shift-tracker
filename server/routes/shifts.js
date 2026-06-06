@@ -220,7 +220,7 @@ router.get('/summary', (req, res) => {
 // const PDFDocument = require('pdfkit')
 
 router.get('/export', (req, res) => {
-    const { from, to } = req.query
+    const { from, to, month } = req.query
     if (!from || !to) return res.status(400).json({ error: 'from and to are required' })
 
     const shifts = db.prepare(`
@@ -252,7 +252,7 @@ router.get('/export', (req, res) => {
 
     const doc = new PDFDocument({ margin: 40, size: 'A4' })
     res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Content-Disposition', `attachment; filename="shifts-${from.slice(0,10)}-${to.slice(0,10)}.pdf"`)
+    res.setHeader('Content-Disposition', `attachment; filename="shifts-${month}.pdf"`)
     doc.pipe(res)
 
     // ── Header
